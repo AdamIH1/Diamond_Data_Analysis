@@ -1,4 +1,4 @@
-          #Diamonds Data Set Analysis: 2018 
+          #Diamonds Data Set Analysis: 2017
 # Data is from an open sourse site kaggle (https://www.kaggle.com/shivam2503/diamonds)
 # Data set has five variables: carat, price, cut, color, and clarity.
 # The variable carat is the weight of a diamond. 
