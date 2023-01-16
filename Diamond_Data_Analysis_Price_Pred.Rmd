@@ -1,0 +1,180 @@
+---
+title: "Diamond Data Analysis"
+output: 
+  html_document:
+    toc: true
+    number_sections: false
+    toc_float: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Libraries & Data 
+
+```{r lib_data}
+
+library(tidyverse)
+library(dplyr)
+library(cowplot)
+library(ggcorrplot)
+library(Metrics)
+set.seed(999)
+
+df <- read.csv("diamond_data.csv")
+
+```
+
+## Data Cleaning
+
+### Count N/A Values
+```{r count_na}
+
+colSums(is.na(df))
+
+```
+
+### Remove Wrong Entries
+
+```{r remove_wrong}
+
+df %>%
+  summarise(x_zero = sum(x==0), y_zero = sum(y==0), z_zero = sum(z==0))
+
+df <- df %>% 
+  subset(x != 0 & y != 0 & z != 0)
+
+```
+
+### Plotting Outliers
+
+```{r plot outliers}
+
+out_carat <- ggplot(data = df, aes(y = carat)) + 
+  ggtitle("Outliers in Carat") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_depth <- ggplot(data = df, aes(y = depth)) + 
+  ggtitle("Outliers in Depth") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_table <- ggplot(data = df, aes(y = table)) + 
+  ggtitle("Outliers in Table") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_x <- ggplot(data = df, aes(y = x)) + 
+  ggtitle("Outliers in X") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_y <- ggplot(data = df, aes(y = y)) + 
+  ggtitle("Outliers in Y") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_z <- ggplot(data = df, aes(y = z)) + 
+  ggtitle("Outliers in Z") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_price <- ggplot(data = df, aes(y = price)) + 
+  ggtitle("Outliers in Price") + 
+  geom_boxplot() + 
+  theme_light()
+
+
+plot_grid(out_carat, out_depth, out_table, out_x, out_y, out_z)
+
+```
+
+
+
+## Exploratory Data Analysis 
+
+### Summary Stats 
+
+```{r stats}
+
+numerical_features <- select_if(df, is.numeric)
+categorical_features <- select_if(df,is.character)
+
+summary(numerical_features)
+summary(categorical_features)
+
+# shows proportion for each feature but better as visual 
+# sapply(categorical_features, function(x) prop.table(table(x)))  
+
+```
+
+### Price Plots 
+
+```{r price_cat}
+
+ggplot(data = df, aes(x=price, fill=cut)) + 
+  geom_histogram(bins = 30) +
+  labs(y="Count", x="Price", title="Price with Cut of Diamonds") 
+
+ggplot(data = df, aes(x=price, fill=color)) + 
+  geom_histogram(bins = 30) +
+  labs(y="Count", x="Price", title="Price with Color of Diamonds") 
+
+ggplot(data = df, aes(x=price, fill=clarity)) + 
+  geom_histogram(bins = 30) +
+  labs(y="Count", x="Price", title="Price with Clarity of Diamonds") 
+
+```
+
+```{r correlation_plot}
+
+ggcorrplot(cor(numerical_features), lab = TRUE)
+
+```
+
+
+## Predict Price  
+
+### Spliting Data 
+```{r split_data}
+
+sample <- sample(c(TRUE, FALSE), nrow(df), replace=TRUE, prob=c(0.7,0.3))
+
+train  <- df[sample, ]
+test   <- df[!sample, ]
+
+```
+
+
+### Train and Pred Linear Reg
+```{r train_pred_linear_reg}
+
+lin_model <- lm(data = train, formula = price ~ carat + as.factor(cut) + as.factor(color) + 
+                  as.factor(clarity))
+
+summary(lin_model)
+
+```
+
+### Results
+```{r}
+
+y_pred <- predict(lin_model, newdata = test[, colnames(test)[colnames(test) != 'price']])
+
+rmse(test$price,y_pred)
+mae(test$price,y_pred)
+
+plot(y_pred, test$price,
+     xlab = "Predicted Values"
+     , ylab = "Acutal Values"
+     , main = 'Linear Regression Predicted Vs. Actual')
+
+abline(a = 0, b = 1, lwd=2,
+       col = "green")
+
+```
+
