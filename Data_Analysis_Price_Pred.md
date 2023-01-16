@@ -1,6 +1,20 @@
 Diamond Data Analysis
 ================
 
+-   [Libraries & Data](#libraries--data)
+-   [Data Cleaning](#data-cleaning)
+    -   [Count N/A Values](#count-na-values)
+    -   [Remove Wrong Entries](#remove-wrong-entries)
+    -   [Plotting Outliers](#plotting-outliers)
+-   [Exploratory Data Analysis](#exploratory-data-analysis)
+    -   [Summary Stats](#summary-stats)
+    -   [Price Plots](#price-plots)
+-   [Predict Price](#predict-price)
+    -   [Spliting Data](#spliting-data)
+    -   [Train Model](#train-model)
+    -   [Predict](#predict)
+    -   [Results](#results)
+
 ## Libraries & Data
 
 ``` r
@@ -179,7 +193,7 @@ train  <- df[sample, ]
 test   <- df[!sample, ]
 ```
 
-### Train and Pred Linear Reg
+### Train Model
 
 ``` r
 lin_model <- lm(data = train, formula = price ~ carat + as.factor(cut) + as.factor(color) + 
@@ -225,11 +239,15 @@ summary(lin_model)
     ## Multiple R-squared:  0.9155, Adjusted R-squared:  0.9155 
     ## F-statistic: 2.272e+04 on 18 and 37756 DF,  p-value: < 2.2e-16
 
-### Results
+### Predict
 
 ``` r
 y_pred <- predict(lin_model, newdata = test[, colnames(test)[colnames(test) != 'price']])
+```
 
+### Results
+
+``` r
 rmse(test$price,y_pred)
 ```
 
@@ -251,4 +269,4 @@ abline(a = 0, b = 1, lwd=2,
        col = "green")
 ```
 
-![](Diamond_Data_Analysis_Price_Pred_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](Diamond_Data_Analysis_Price_Pred_files/figure-gfm/reg_results-1.png)<!-- -->

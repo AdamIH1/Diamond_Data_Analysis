@@ -1,6 +1,8 @@
 ---
 title: "Diamond Data Analysis"
-output: rmarkdown::github_document
+output: 
+  rmarkdown::github_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
@@ -145,7 +147,7 @@ test   <- df[!sample, ]
 ```
 
 
-### Train and Pred Linear Reg
+### Train Model
 ```{r train_pred_linear_reg}
 
 lin_model <- lm(data = train, formula = price ~ carat + as.factor(cut) + as.factor(color) + 
@@ -155,10 +157,18 @@ summary(lin_model)
 
 ```
 
-### Results
+### Predict 
+
 ```{r}
 
 y_pred <- predict(lin_model, newdata = test[, colnames(test)[colnames(test) != 'price']])
+
+```
+
+
+### Results
+
+```{r reg_results}
 
 rmse(test$price,y_pred)
 mae(test$price,y_pred)
