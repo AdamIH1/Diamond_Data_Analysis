@@ -108,7 +108,7 @@ out_price <- ggplot(data = df, aes(y = price)) +
 plot_grid(out_carat, out_depth, out_table, out_x, out_y, out_z)
 ```
 
-![](Diamond_Data_Analysis_Price_Pred_files/figure-gfm/plot%20outliers-1.png)<!-- -->
+![](Data_Analysis_Price_Pred_files/figure-gfm/plot%20outliers-1.png)<!-- -->
 
 ## Exploratory Data Analysis
 
@@ -158,7 +158,7 @@ ggplot(data = df, aes(x=price, fill=cut)) +
   labs(y="Count", x="Price", title="Price with Cut of Diamonds") 
 ```
 
-![](Diamond_Data_Analysis_Price_Pred_files/figure-gfm/price_cat-1.png)<!-- -->
+![](Data_Analysis_Price_Pred_files/figure-gfm/price_cat-1.png)<!-- -->
 
 ``` r
 ggplot(data = df, aes(x=price, fill=color)) + 
@@ -166,7 +166,7 @@ ggplot(data = df, aes(x=price, fill=color)) +
   labs(y="Count", x="Price", title="Price with Color of Diamonds") 
 ```
 
-![](Diamond_Data_Analysis_Price_Pred_files/figure-gfm/price_cat-2.png)<!-- -->
+![](Data_Analysis_Price_Pred_files/figure-gfm/price_cat-2.png)<!-- -->
 
 ``` r
 ggplot(data = df, aes(x=price, fill=clarity)) + 
@@ -174,13 +174,13 @@ ggplot(data = df, aes(x=price, fill=clarity)) +
   labs(y="Count", x="Price", title="Price with Clarity of Diamonds") 
 ```
 
-![](Diamond_Data_Analysis_Price_Pred_files/figure-gfm/price_cat-3.png)<!-- -->
+![](Data_Analysis_Price_Pred_files/figure-gfm/price_cat-3.png)<!-- -->
 
 ``` r
 ggcorrplot(cor(numerical_features), lab = TRUE)
 ```
 
-![](Diamond_Data_Analysis_Price_Pred_files/figure-gfm/correlation_plot-1.png)<!-- -->
+![](Data_Analysis_Price_Pred_files/figure-gfm/correlation_plot-1.png)<!-- -->
 
 ## Predict Price
 
@@ -269,4 +269,4 @@ abline(a = 0, b = 1, lwd=2,
        col = "green")
 ```
 
-![](Diamond_Data_Analysis_Price_Pred_files/figure-gfm/reg_results-1.png)<!-- -->
+![](Data_Analysis_Price_Pred_files/figure-gfm/reg_results-1.png)<!-- -->
