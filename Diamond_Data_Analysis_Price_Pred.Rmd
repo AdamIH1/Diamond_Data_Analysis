@@ -1,13 +1,6 @@
 ---
 title: "Diamond Data Analysis"
-output:
-  pdf_document:
-    toc: yes
-  html_document:
-    toc: yes
-    number_sections: no
-    toc_float: yes
-    df_print: paged
+output: rmarkdown::github_document
 ---
 
 ```{r setup, include=FALSE}
