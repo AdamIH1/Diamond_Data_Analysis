@@ -9,6 +9,7 @@ Diamond Data Analysis
 -   [Exploratory Data Analysis](#exploratory-data-analysis)
     -   [Summary Stats](#summary-stats)
     -   [Price Plots](#price-plots)
+    -   [VIF](#vif)
 -   [Predict Price](#predict-price)
     -   [Spliting Data](#spliting-data)
     -   [Train Model](#train-model)
@@ -32,6 +33,22 @@ library(tidyverse)
 
 ``` r
 library(dplyr)
+library(car)
+```
+
+    ## Loading required package: carData
+    ## 
+    ## Attaching package: 'car'
+    ## 
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     recode
+    ## 
+    ## The following object is masked from 'package:purrr':
+    ## 
+    ##     some
+
+``` r
 library(cowplot)
 library(ggcorrplot)
 library(Metrics)
@@ -75,32 +92,32 @@ out_carat <- ggplot(data = df, aes(y = carat)) +
   theme_light()
 
 out_depth <- ggplot(data = df, aes(y = depth)) + 
-  ggtitle("Outliers in Depth") + 
+  ggtitle("Depth") + 
   geom_boxplot() + 
   theme_light()
 
 out_table <- ggplot(data = df, aes(y = table)) + 
-  ggtitle("Outliers in Table") + 
+  ggtitle("Table") + 
   geom_boxplot() + 
   theme_light()
 
 out_x <- ggplot(data = df, aes(y = x)) + 
-  ggtitle("Outliers in X") + 
+  ggtitle("X") + 
   geom_boxplot() + 
   theme_light()
 
 out_y <- ggplot(data = df, aes(y = y)) + 
-  ggtitle("Outliers in Y") + 
+  ggtitle("Y") + 
   geom_boxplot() + 
   theme_light()
 
 out_z <- ggplot(data = df, aes(y = z)) + 
-  ggtitle("Outliers in Z") + 
+  ggtitle("Z") + 
   geom_boxplot() + 
   theme_light()
 
 out_price <- ggplot(data = df, aes(y = price)) + 
-  ggtitle("Outliers in Price") + 
+  ggtitle("Price") + 
   geom_boxplot() + 
   theme_light()
 
@@ -175,12 +192,39 @@ ggplot(data = df, aes(x=price, fill=clarity)) +
 ```
 
 ![](Data_Analysis_Price_Pred_files/figure-gfm/price_cat-3.png)<!-- -->
+### Correlation Plot
 
 ``` r
 ggcorrplot(cor(numerical_features), lab = TRUE)
 ```
 
 ![](Data_Analysis_Price_Pred_files/figure-gfm/correlation_plot-1.png)<!-- -->
+
+### VIF
+
+``` r
+model_vif_all <- lm(data = df, formula = price ~ carat + depth + table + x + y + z)
+
+vif_values <- vif(model_vif_all)
+
+barplot(vif_values, main = "VIF Values, All Features", horiz = TRUE, col = "steelblue"
+        ,las=1, xlab = 'VIF', ylab = 'Feature')
+
+abline(v = 5, lwd = 3, lty = 2)
+```
+
+![](Data_Analysis_Price_Pred_files/figure-gfm/VIF-1.png)<!-- -->
+
+``` r
+model_vif_remove <- lm(data = df, formula = price ~ carat + depth + table)
+
+vif_values_remove <- vif(model_vif_remove)
+
+barplot(vif_values_remove, main = "VIF Values, Minus X Y Z", horiz = TRUE, col = "steelblue"
+        ,las=1, xlim= c(0,3), xlab = 'VIF', ylab = 'Feature')
+```
+
+![](Data_Analysis_Price_Pred_files/figure-gfm/VIF-2.png)<!-- -->
 
 ## Predict Price
 
@@ -248,10 +292,22 @@ y_pred <- predict(lin_model, newdata = test[, colnames(test)[colnames(test) != '
 ### Results
 
 ``` r
+print('RMSE:')
+```
+
+    ## [1] "RMSE:"
+
+``` r
 rmse(test$price,y_pred)
 ```
 
     ## [1] 1153.436
+
+``` r
+print('MAE:')
+```
+
+    ## [1] "MAE:"
 
 ``` r
 mae(test$price,y_pred)
