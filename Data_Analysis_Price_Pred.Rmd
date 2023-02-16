@@ -19,6 +19,8 @@ library(dplyr)
 library(car)
 library(cowplot)
 library(ggcorrplot)
+library(fastDummies)
+library(glmnet)
 library(Metrics)
 set.seed(999)
 
@@ -91,6 +93,61 @@ plot_grid(out_carat, out_depth, out_table, out_x, out_y, out_z)
 
 ```
 
+### Removing Outliers 
+
+```{r removing_out}
+
+remove_outliers <- function(df, columns) {
+  for (col in columns) {
+    col_mean <- mean(df[[col]])
+    col_sd <- sd(df[[col]])
+    df <- df[!(df[[col]] > col_mean + 3*col_sd | df[[col]] < col_mean - 3*col_sd),]
+  }
+  return(df)
+}
+
+df_clean <- remove_outliers(df, c("carat", "depth", 'table','price','x','y',"z"))
+
+out_carat <- ggplot(data = df_clean, aes(y = carat)) + 
+  ggtitle("Outliers in Carat") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_depth <- ggplot(data = df_clean, aes(y = depth)) + 
+  ggtitle("Depth") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_table <- ggplot(data = df_clean, aes(y = table)) + 
+  ggtitle("Table") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_x <- ggplot(data = df_clean, aes(y = x)) + 
+  ggtitle("X") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_y <- ggplot(data = df_clean, aes(y = y)) + 
+  ggtitle("Y") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_z <- ggplot(data = df_clean, aes(y = z)) + 
+  ggtitle("Z") + 
+  geom_boxplot() + 
+  theme_light()
+
+out_price <- ggplot(data = df_clean, aes(y = price)) + 
+  ggtitle("Price") + 
+  geom_boxplot() + 
+  theme_light()
+
+
+plot_grid(out_carat, out_depth, out_table, out_x, out_y, out_z)
+
+```
+
 
 ## Exploratory Data Analysis 
 
@@ -98,8 +155,8 @@ plot_grid(out_carat, out_depth, out_table, out_x, out_y, out_z)
 
 ```{r stats}
 
-numerical_features <- select_if(df, is.numeric)
-categorical_features <- select_if(df,is.character)
+numerical_features <- select_if(df_clean, is.numeric)
+categorical_features <- select_if(df_clean,is.character)
 
 summary(numerical_features)
 summary(categorical_features)
@@ -113,15 +170,15 @@ summary(categorical_features)
 
 ```{r price_cat}
 
-ggplot(data = df, aes(x=price, fill=cut)) + 
+ggplot(data = df_clean, aes(x=price, fill=cut)) + 
   geom_histogram(bins = 30) +
   labs(y="Count", x="Price", title="Price with Cut of Diamonds") 
 
-ggplot(data = df, aes(x=price, fill=color)) + 
+ggplot(data = df_clean, aes(x=price, fill=color)) + 
   geom_histogram(bins = 30) +
   labs(y="Count", x="Price", title="Price with Color of Diamonds") 
 
-ggplot(data = df, aes(x=price, fill=clarity)) + 
+ggplot(data = df_clean, aes(x=price, fill=clarity)) + 
   geom_histogram(bins = 30) +
   labs(y="Count", x="Price", title="Price with Clarity of Diamonds") 
 
@@ -138,18 +195,18 @@ ggcorrplot(cor(numerical_features), lab = TRUE)
 
 ```{r VIF}
 
-model_vif_all <- lm(data = df, formula = price ~ carat + depth + table + x + y + z)
+model_vif_all <- lm(data = df_clean, formula = price ~ carat + depth + table + x + y + z)
 
 vif_values <- vif(model_vif_all)
 
-barplot(vif_values, main = "VIF Values, All Features", horiz = TRUE, col = "steelblue"
+barplot(vif_values, main = "VIF Values, All Numerical Features", horiz = TRUE, col = "steelblue"
         ,las=1, xlab = 'VIF', ylab = 'Feature')
 
 abline(v = 5, lwd = 3, lty = 2)
 
 
 
-model_vif_remove <- lm(data = df, formula = price ~ carat + depth + table)
+model_vif_remove <- lm(data = df_clean, formula = price ~ carat + depth + table)
 
 vif_values_remove <- vif(model_vif_remove)
 
@@ -158,47 +215,121 @@ barplot(vif_values_remove, main = "VIF Values, Minus X Y Z", horiz = TRUE, col =
 
 ```
 
-## Predict Price  
+## Predict Price Using Regression 
 
 ### Spliting Data 
 ```{r split_data}
 
-sample <- sample(c(TRUE, FALSE), nrow(df), replace=TRUE, prob=c(0.7,0.3))
+sample <- sample(c(TRUE, FALSE), nrow(df_clean), replace=TRUE, prob=c(0.7,0.3))
 
-train  <- df[sample, ]
-test   <- df[!sample, ]
+# linear regression df 
+train  <- df_clean[sample, ]
+test   <- df_clean[!sample, ]
+
+# ridge and lasso df 
+
+train_rid_las <- dummy_columns(train, select_columns = c('cut', 'color','clarity')
+                               , remove_selected_columns = TRUE)
+xtrain_rid_las <- data.matrix(select(train_rid_las, -c('price', 'x', 'y', 'z')))
+ytrain_rid_las <- data.matrix(select(train_rid_las, c('price')))
+
+test_rid_las <- dummy_columns(test, select_columns = c('cut', 'color','clarity')
+                              , remove_selected_columns = TRUE)
+xtest_rid_las <- data.matrix(select(test_rid_las, -c('price', 'x', 'y', 'z')))
+ytest_rid_las <- data.matrix(select(test_rid_las, c('price')))
 
 ```
 
 
-### Train Model
-```{r train_pred_linear_reg}
+### Linear Regression Model 
 
-lin_model <- lm(data = train, formula = price ~ carat + as.factor(cut) + as.factor(color) + 
+```{r train_pred_reg}
+
+# linear regression 
+linear_model <- lm(data = train, formula = price ~ carat + as.factor(cut) + as.factor(color) + 
                   as.factor(clarity))
 
-summary(lin_model)
+summary(linear_model)
 
 ```
+
+### Ridge and Lasso Regression Models 
+
+```{r rid_las}
+
+# basic ridge regression 
+ridge_model <- glmnet(x = xtrain_rid_las, y = ytrain_rid_las, alpha = 0, standardize = TRUE)
+
+# basic lasso regression 
+lasso_model <- glmnet(x = xtrain_rid_las, y = ytrain_rid_las, alpha = 1, standardize = TRUE)
+
+
+
+# use cv to find optimal lambda value
+cv_model_ridge <- cv.glmnet(xtrain_rid_las, ytrain_rid_las, alpha = 0)
+cv_model_lasso <- cv.glmnet(xtrain_rid_las, ytrain_rid_las, alpha = 1)
+
+#find lambda value that minimizes MSE
+best_ridge_lambda <- cv_model_ridge$lambda.min
+
+best_lasso_lambda <- cv_model_lasso$lambda.min
+
+# plot of MSE by lambda value
+plot(cv_model_ridge) 
+plot(cv_model_lasso) 
+
+
+best_ridge_model <- glmnet(x = xtrain_rid_las, y = ytrain_rid_las, alpha = 0
+                           , lambda = best_ridge_lambda)
+
+best_lasso_model <- glmnet(x = xtrain_rid_las, y = ytrain_rid_las, alpha = 1
+                           , lambda = best_lasso_lambda)
+
+```
+
 
 ### Predict 
 
-```{r}
+```{r prediction}
 
-y_pred <- predict(lin_model, newdata = test[, colnames(test)[colnames(test) != 'price']])
+y_pred_linear <- predict(linear_model, newdata = test[, colnames(test)[colnames(test) != 'price']])
+
+y_pred_ridge <- predict(best_ridge_model, newx = xtest_rid_las)
+
+y_pred_lasso <- predict(best_lasso_model, newx = xtest_rid_las)
+
 
 ```
 
 
 ### Results
 
-```{r reg_results}
-print('RMSE:')
-rmse(test$price,y_pred)
-print('MAE:')
-mae(test$price,y_pred)
+```{r results_table}
+RSQUARE = function(y_actual,y_predict){
+  round(cor(y_actual,y_predict)^2,3)
+}
 
-plot(y_pred, test$price,
+metrics_lin <- c('Linear Regression',rmse(test$price,y_pred_linear), mae(test$price,y_pred_linear)
+                  , RSQUARE(test$price,y_pred_linear))
+
+metrics_rid <- c('Ridge Regression',rmse(ytest_rid_las,y_pred_ridge), mae(ytest_rid_las,y_pred_ridge)
+                 , RSQUARE(ytest_rid_las,y_pred_ridge))
+
+metrics_las <- c('Ridge Regression',rmse(ytest_rid_las,y_pred_lasso), mae(ytest_rid_las,y_pred_lasso)
+                , RSQUARE(ytest_rid_las,y_pred_lasso))
+
+
+model_metrics <- list(metrics_lin, metrics_rid, metrics_las)
+
+metrics_df <- as.data.frame(do.call(rbind, model_metrics))
+colnames(metrics_df) <- c('Model','RMSE','MSE','R^2')
+metrics_df
+
+```
+
+```{r reg_results}
+
+plot(y_pred_linear, test$price,
      xlab = "Predicted Values"
      , ylab = "Acutal Values"
      , main = 'Linear Regression Predicted Vs. Actual')
@@ -207,4 +338,5 @@ abline(a = 0, b = 1, lwd=2,
        col = "green")
 
 ```
+
 
