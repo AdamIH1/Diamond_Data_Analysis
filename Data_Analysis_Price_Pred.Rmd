@@ -315,7 +315,7 @@ metrics_lin <- c('Linear Regression',rmse(test$price,y_pred_linear), mae(test$pr
 metrics_rid <- c('Ridge Regression',rmse(ytest_rid_las,y_pred_ridge), mae(ytest_rid_las,y_pred_ridge)
                  , RSQUARE(ytest_rid_las,y_pred_ridge))
 
-metrics_las <- c('Ridge Regression',rmse(ytest_rid_las,y_pred_lasso), mae(ytest_rid_las,y_pred_lasso)
+metrics_las <- c('Lasso Regression',rmse(ytest_rid_las,y_pred_lasso), mae(ytest_rid_las,y_pred_lasso)
                 , RSQUARE(ytest_rid_las,y_pred_lasso))
 
 

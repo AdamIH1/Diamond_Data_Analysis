@@ -433,7 +433,7 @@ metrics_lin <- c('Linear Regression',rmse(test$price,y_pred_linear), mae(test$pr
 metrics_rid <- c('Ridge Regression',rmse(ytest_rid_las,y_pred_ridge), mae(ytest_rid_las,y_pred_ridge)
                  , RSQUARE(ytest_rid_las,y_pred_ridge))
 
-metrics_las <- c('Ridge Regression',rmse(ytest_rid_las,y_pred_lasso), mae(ytest_rid_las,y_pred_lasso)
+metrics_las <- c('Lasso Regression',rmse(ytest_rid_las,y_pred_lasso), mae(ytest_rid_las,y_pred_lasso)
                 , RSQUARE(ytest_rid_las,y_pred_lasso))
 
 
@@ -447,7 +447,7 @@ metrics_df
     ##               Model             RMSE              MSE   R^2
     ## 1 Linear Regression 942.296773808064 673.352666321433 0.922
     ## 2  Ridge Regression 1018.30195818907 663.110006381553  0.92
-    ## 3  Ridge Regression 942.004350981537 669.962058032012 0.922
+    ## 3  Lasso Regression 942.004350981537 669.962058032012 0.922
 
 ``` r
 plot(y_pred_linear, test$price,
